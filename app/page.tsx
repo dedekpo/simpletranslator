@@ -78,7 +78,7 @@ export default function Home() {
             {languages.map((language, index) => (
               <button
                 key={language.code + index}
-                className={`cursor-pointer border border-pink-300 rounded-md px-2 py-1 truncate ${
+                className={`cursor-pointer border border-pink-300 rounded-md px-2 h-[30px] truncate ${
                   selectedLanguage?.code === language.code
                     ? "bg-pink-700 text-white shadow-lg"
                     : ""
