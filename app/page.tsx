@@ -1,7 +1,13 @@
 "use client";
 
 import { translateAndGetAudio } from "./action/translate";
-import { AudioIcon, CloseIcon, DownloadIcon, SpeakerIcon } from "./lib/icons";
+import {
+  AudioIcon,
+  CloseIcon,
+  DownloadIcon,
+  MicrophoneIcon,
+  SpeakerIcon,
+} from "./lib/icons";
 import { Language, languages } from "./lib/languages";
 import { useRef, useState } from "react";
 
@@ -10,9 +16,52 @@ export default function Home() {
   const inputRef = useRef<HTMLInputElement>(null);
   const [isTranslating, setIsTranslating] = useState(false);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordedBlob, setRecordedBlob] = useState<Blob | null>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const chunksRef = useRef<Blob[]>([]);
 
   function handleLanguageSelect(language: Language) {
     setSelectedLanguage(language);
+  }
+
+  async function startRecording() {
+    try {
+      // Reset any previous recordings
+      setRecordedBlob(null);
+      chunksRef.current = [];
+
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mediaRecorder = new MediaRecorder(stream);
+      mediaRecorderRef.current = mediaRecorder;
+
+      mediaRecorder.ondataavailable = (e) => {
+        if (e.data.size > 0) {
+          chunksRef.current.push(e.data);
+        }
+      };
+
+      mediaRecorder.onstop = () => {
+        const audioBlob = new Blob(chunksRef.current, { type: "audio/mp3" });
+        setRecordedBlob(audioBlob);
+
+        // Stop all tracks of the stream
+        stream.getTracks().forEach((track) => track.stop());
+      };
+
+      setIsRecording(true);
+      mediaRecorder.start();
+    } catch (error) {
+      console.error("Error accessing microphone:", error);
+      alert("Could not access microphone. Please check your permissions.");
+    }
+  }
+
+  function stopRecording() {
+    if (mediaRecorderRef.current && isRecording) {
+      mediaRecorderRef.current.stop();
+      setIsRecording(false);
+    }
   }
 
   async function handleTranslate() {
@@ -21,9 +70,18 @@ export default function Home() {
       return;
     }
 
-    const file = inputRef.current?.files?.[0];
+    let file: File | null = null;
+
+    if (recordedBlob) {
+      file = new File([recordedBlob], "recorded-audio.mp3", {
+        type: "audio/mp3",
+      });
+    } else {
+      file = inputRef.current?.files?.[0] || null;
+    }
 
     if (!file) {
+      alert("Please select or record an audio file");
       return;
     }
 
@@ -57,14 +115,34 @@ export default function Home() {
           </p>
         </div>
 
-        <div className="w-full">
-          <button
-            onClick={() => inputRef.current?.click()}
-            className="cursor-pointer w-full h-12 border border-pink-400 active:bg-pink-100 shadow-md flex items-center justify-center gap-2"
-          >
-            <AudioIcon />
-            <span>Select Audio</span>
-          </button>
+        <div className="flex flex-col w-full gap-2">
+          <div className="grid grid-cols-2 gap-2 w-full">
+            <button
+              onClick={() => inputRef.current?.click()}
+              className="cursor-pointer h-12 border border-pink-400 active:bg-pink-100 shadow-md flex items-center justify-center gap-2"
+            >
+              <AudioIcon />
+              <span>Select Audio</span>
+            </button>
+            <button
+              onClick={isRecording ? stopRecording : startRecording}
+              className={`cursor-pointer h-12 border ${
+                isRecording ? "border-red-500 bg-red-100" : "border-pink-400"
+              } active:bg-pink-100 shadow-md flex items-center justify-center gap-2`}
+            >
+              <MicrophoneIcon />
+              <span>{isRecording ? "Stop Recording" : "Record Audio"}</span>
+            </button>
+          </div>
+          {recordedBlob && (
+            <div className="w-full p-2 border border-pink-400/20 flex items-center justify-center">
+              <audio
+                src={URL.createObjectURL(recordedBlob)}
+                controls
+                className="w-full"
+              />
+            </div>
+          )}
           <input
             ref={inputRef}
             type="file"
@@ -92,7 +170,7 @@ export default function Home() {
         </div>
         <button
           onClick={handleTranslate}
-          disabled={isTranslating}
+          disabled={isTranslating || isRecording}
           className="cursor-pointer active:bg-pink-800 w-full h-12 border border-pink-700 shadow-md bg-pink-700 text-white font-bold disabled:opacity-90"
         >
           {isTranslating ? "Translating..." : "Translate"}
