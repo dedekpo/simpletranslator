@@ -2,6 +2,8 @@
 
 A web application that translates audio files from one language to another using the JigsawStack API. Users can upload audio files, select a target language, and receive the translated audio with the ability to play and download it.
 
+**Live Demo:** [https://simpletranslator.andreelias.dev](https://simpletranslator.andreelias.dev)
+
 ## Features
 
 - Upload audio files (MP3 format)
@@ -67,6 +69,10 @@ yarn dev
 3. Click "Translate" to process the audio
 4. Once translation is complete, you can play the translated audio directly in the browser
 5. Use the "Download" button to save the translated audio file
+
+### Sample Audio File
+
+For testing purposes, you can use the included `sample-naruto-voicelines.mp3` file to quickly try out the translation functionality without having to source your own audio files.
 
 ## Limitations
 
