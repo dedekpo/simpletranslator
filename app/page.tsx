@@ -121,7 +121,7 @@ function Result({
         </button>
         <div className="flex items-center gap-2 font-bold text-2xl mb-4">
           <SpeakerIcon />
-          <p>Here's your result!</p>
+          <p>Here&apos;s your result!</p>
         </div>
         <div className="w-full flex items-center justify-center p-4 border border-pink-400/20">
           <audio src={audioUrl} controls />

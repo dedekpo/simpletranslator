@@ -57,7 +57,7 @@ export async function translateAndGetAudio(
 
     const audioResponse = await jigsaw.audio.text_to_speech({
       text: translateResponse.translated_text,
-      // @ts-ignore - SupportedAccents not found in jigsawstack because it's not exported
+      // @ts-expect-error - SupportedAccents not found in jigsawstack because it's not exported
       accent: targetLanguage.accent,
     });
 
