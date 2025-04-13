@@ -75,10 +75,9 @@ export default function Home() {
         <div className="flex flex-col items-center gap-2 w-full">
           <span>Translate to</span>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 max-h-[300px] overflow-y-auto border border-pink-400 p-4 shadow-md">
-            {languages.map((language) => (
+            {languages.map((language, index) => (
               <button
-                key={language.code}
-                value={language.code}
+                key={language.code + index}
                 className={`cursor-pointer border border-pink-300 rounded-md px-2 py-1 truncate ${
                   selectedLanguage?.code === language.code
                     ? "bg-pink-700 text-white shadow-lg"
@@ -86,7 +85,7 @@ export default function Home() {
                 }`}
                 onClick={() => handleLanguageSelect(language)}
               >
-                {language.name}
+                {language.flag} {language.name}
               </button>
             ))}
           </div>
