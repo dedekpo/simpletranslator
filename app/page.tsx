@@ -79,14 +79,15 @@ export default function Home() {
               <button
                 key={language.code}
                 value={language.code}
-                className={`cursor-pointer border border-pink-300 rounded-md px-2 py-1 truncate ${
+                className={`cursor-pointer border border-pink-300 rounded-md px-2 py-1 truncate font-emoji ${
                   selectedLanguage?.code === language.code
                     ? "bg-pink-700 text-white shadow-lg"
                     : ""
                 }`}
                 onClick={() => handleLanguageSelect(language)}
               >
-                {language.flag} {language.name}
+                <span className="font-emoji">{language.flag}</span>{" "}
+                {language.name}
               </button>
             ))}
           </div>

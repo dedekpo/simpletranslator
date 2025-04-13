@@ -27,11 +27,6 @@ export async function translateAndGetAudio(
       throw new Error("Failed to transcribe audio file");
     }
 
-    console.log({
-      text: speechToTextResponse.text,
-      target_language: targetLanguage.code,
-    });
-
     const translateResponse = await jigsaw.translate({
       text: speechToTextResponse.text,
       target_language: targetLanguage.code,
@@ -49,8 +44,6 @@ export async function translateAndGetAudio(
     //   37 |       target_language: targetLanguage.code,
     //   38 |     });
 
-    console.log("translateResponse", translateResponse);
-
     if (!translateResponse.success) {
       throw new Error("Failed to translate audio file");
     }
@@ -60,8 +53,6 @@ export async function translateAndGetAudio(
       // @ts-expect-error - SupportedAccents not found in jigsawstack because it's not exported
       accent: targetLanguage.accent,
     });
-
-    console.log(audioResponse);
 
     if (!audioResponse.blob) {
       throw new Error("Failed to generate audio file");
