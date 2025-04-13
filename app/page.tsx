@@ -1,103 +1,152 @@
-import Image from "next/image";
+"use client";
+
+import { translateAndGetAudio } from "./action/translate";
+import { AudioIcon, CloseIcon, DownloadIcon, SpeakerIcon } from "./lib/icons";
+import { Language, languages } from "./lib/languages";
+import { useRef, useState } from "react";
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-[family-name:var(--font-geist-mono)] font-semibold">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+  const [selectedLanguage, setSelectedLanguage] = useState<Language>();
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [isTranslating, setIsTranslating] = useState(false);
+  const [audioUrl, setAudioUrl] = useState<string | null>(null);
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+  function handleLanguageSelect(language: Language) {
+    setSelectedLanguage(language);
+  }
+
+  async function handleTranslate() {
+    if (!selectedLanguage) {
+      alert("Please select a language");
+      return;
+    }
+
+    const file = inputRef.current?.files?.[0];
+
+    if (!file) {
+      return;
+    }
+
+    if (file.size > 3 * 1024 * 1024) {
+      alert("File size must be less than 3MB");
+      return;
+    }
+
+    setIsTranslating(true);
+    const formData = new FormData();
+    formData.append("audio", file);
+    const blob = await translateAndGetAudio(formData, selectedLanguage);
+    setIsTranslating(false);
+
+    if (!blob) {
+      return;
+    }
+
+    setAudioUrl(URL.createObjectURL(blob));
+  }
+
+  return (
+    <>
+      {isTranslating && <Loading />}
+      {audioUrl && <Result audioUrl={audioUrl} setAudioUrl={setAudioUrl} />}
+      <div className="flex flex-col gap-6 items-center justify-center min-h-screen py-10 max-w-[90%] lg:max-w-xl mx-auto">
+        <div className="text-center">
+          <h1 className="text-6xl font-bold">Simple Translator</h1>
+          <p className="text-gray-500 text-lg mt-1">
+            Convert any audio to a specific language
+          </p>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
+
+        <div className="w-full">
+          <button
+            onClick={() => inputRef.current?.click()}
+            className="cursor-pointer w-full h-12 border border-pink-400 active:bg-pink-100 shadow-md flex items-center justify-center gap-2"
+          >
+            <AudioIcon />
+            <span>Select Audio</span>
+          </button>
+          <input
+            ref={inputRef}
+            type="file"
+            accept="audio/mp3"
+            className="hidden"
           />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
+        </div>
+        <div className="flex flex-col items-center gap-2 w-full">
+          <span>Translate to</span>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 max-h-[300px] overflow-y-auto border border-pink-400 p-4 shadow-md">
+            {languages.map((language) => (
+              <button
+                key={language.code}
+                value={language.code}
+                className={`cursor-pointer border border-pink-300 rounded-md px-2 py-1 truncate ${
+                  selectedLanguage?.code === language.code
+                    ? "bg-pink-700 text-white shadow-lg"
+                    : ""
+                }`}
+                onClick={() => handleLanguageSelect(language)}
+              >
+                {language.flag} {language.name}
+              </button>
+            ))}
+          </div>
+        </div>
+        <button
+          onClick={handleTranslate}
+          disabled={isTranslating}
+          className="cursor-pointer active:bg-pink-800 w-full h-12 border border-pink-700 shadow-md bg-pink-700 text-white font-bold disabled:opacity-90"
         >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
+          {isTranslating ? "Translating..." : "Translate"}
+        </button>
+      </div>
+    </>
+  );
+}
+
+function Result({
+  audioUrl,
+  setAudioUrl,
+}: {
+  audioUrl: string;
+  setAudioUrl: (audioUrl: string | null) => void;
+}) {
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+      <div className="animate-fadeIn relative w-full max-w-[90%] lg:max-w-lg py-10 text-center flex flex-col gap-4 items-center justify-center border border-pink-400 p-4 rounded-md bg-white shadow-lg">
+        <button
+          className="cursor-pointer absolute top-2 right-2"
+          onClick={() => setAudioUrl(null)}
         >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+          <CloseIcon />
+        </button>
+        <div className="flex items-center gap-2 font-bold text-2xl mb-4">
+          <SpeakerIcon />
+          <p>Here's your result!</p>
+        </div>
+        <div className="w-full flex items-center justify-center p-4 border border-pink-400/20">
+          <audio src={audioUrl} controls />
+        </div>
+        <button
+          className="cursor-pointer active:bg-pink-800 w-full flex items-center gap-2 justify-center h-12 border border-pink-700 shadow-md bg-pink-700 text-white font-bold disabled:opacity-90"
+          onClick={() => {
+            const a = document.createElement("a");
+            a.href = audioUrl;
+            a.download = "translated.mp3";
+            a.click();
+          }}
+        >
+          <DownloadIcon />
+          <span>Download</span>
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function Loading() {
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+      <div className="w-12 h-12 border-t-2 border-b-2 border-pink-500 rounded-full animate-spin" />
     </div>
   );
 }
