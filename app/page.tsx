@@ -32,7 +32,9 @@ export default function Home() {
       chunksRef.current = [];
 
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mediaRecorder = new MediaRecorder(stream);
+      const mediaRecorder = new MediaRecorder(stream, {
+        mimeType: "audio/webm;codecs=opus",
+      });
       mediaRecorderRef.current = mediaRecorder;
 
       mediaRecorder.ondataavailable = (e) => {
@@ -42,7 +44,7 @@ export default function Home() {
       };
 
       mediaRecorder.onstop = () => {
-        const audioBlob = new Blob(chunksRef.current, { type: "audio/mp3" });
+        const audioBlob = new Blob(chunksRef.current, { type: "audio/webm" });
         setRecordedBlob(audioBlob);
 
         // Stop all tracks of the stream
@@ -73,8 +75,8 @@ export default function Home() {
     let file: File | null = null;
 
     if (recordedBlob) {
-      file = new File([recordedBlob], "recorded-audio.mp3", {
-        type: "audio/mp3",
+      file = new File([recordedBlob], "recorded-audio.webm", {
+        type: "audio/webm",
       });
     } else {
       file = inputRef.current?.files?.[0] || null;
@@ -146,7 +148,7 @@ export default function Home() {
           <input
             ref={inputRef}
             type="file"
-            accept="audio/mp3"
+            accept="audio/webm"
             className="hidden"
           />
         </div>
@@ -208,7 +210,7 @@ function Result({
           onClick={() => {
             const a = document.createElement("a");
             a.href = audioUrl;
-            a.download = "translated.mp3";
+            a.download = "translated.webm";
             a.click();
           }}
         >
